@@ -1,14 +1,22 @@
 import 'dotenv/config';
-import { REST, Routes, SlashCommandBuilder } from "discord.js";
+import { REST, Routes, SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
 
 const getCommands = () => [
     new SlashCommandBuilder()
         .setName('ping')
         .setDescription('Replies with pong'),
     new SlashCommandBuilder()
-        .setName('create-test')
-        .setDescription('create')
-        .addStringOption((option) => option.setName('test').setDescription('create test')),
+        .setName('create-link')
+        .setDescription('Create link to scrap'),
+    new SlashCommandBuilder()
+        .setName('update-link')
+        .setDescription('Update Link'),
+    new SlashCommandBuilder()
+        .setName('delete-link')
+        .setDescription('Delete Link'),
+    new SlashCommandBuilder()
+        .setName('test-system')
+        .setDescription('Test system'),
 ];
 
 const registerCommands = async (clientID: string) => {
