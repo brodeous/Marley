@@ -2,7 +2,7 @@ import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
 import { commandLog, responseLog } from './logs.js';
-import { testJob } from './jobs.js';
+import { testJob, createJob } from './jobs.js';
 
 let client: Client<boolean>;
 
@@ -65,8 +65,35 @@ const handleCommands = (client: Client<boolean>) => {
                 registerCommands(CLIENT_ID as string);
             }
 
-            if (interaction.commandName === 'create-link') {
+            if (interaction.commandName === 'create-job') {
                 commandLog(interaction.commandName);
+
+                // Grab options
+                const name = interaction.options.getString('name');
+                const url = interaction.options.getString('url');
+                const selector = interaction.options.getString('selector');
+                const channel = interaction.options.getChannel('channel') || interaction.channel;
+                
+                if (!name || !url || !selector) {
+                    await interaction.reply('Missing required options');
+                    return;
+                }
+
+                if (channel?.type !== ChannelType.GuildText) {
+                    await interaction.reply('Channel must be a text channel');
+                    return;
+                }
+
+                await createJob({
+                    name,
+                    url,
+                    selector,
+                    channelID: channel.id,
+                    guildID: interaction.guildId
+                });
+                
+                console.log(`${interaction.guildId}`);
+
                 await interaction.reply('created');
                 responseLog('created');
                 registerCommands(CLIENT_ID as string);
