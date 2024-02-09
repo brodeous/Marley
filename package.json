@@ -15,6 +15,7 @@
   "dependencies": {
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
+    "http": "^0.0.1-security",
     "prisma": "^5.9.1",
     "puppeteer": "^21.10.0"
   },

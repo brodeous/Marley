@@ -1,4 +1,4 @@
-import { scrap } from './puppeteer.js'
+import { scrap } from './scraper.js'
 import { sendMessage } from './discord.js'
 import { outputMessage } from './messenger.js'
 import { cleanQueryParams } from './cleanQueryParams.js'

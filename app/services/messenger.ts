@@ -1,4 +1,3 @@
-
 const outputMessage = (message: string): string => {
     return message.split('\n')
     .map((message) => `> ${message}`)
