@@ -7,12 +7,14 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "concurrently \"nodemon dist/index.js\" \"tsc -w\""
+    "dev": "concurrently \"nodemon dist/index.js\" \"tsc -w\"",
+    "prisma-generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.9.1",
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
     "http": "^0.0.1-security",
@@ -20,7 +22,6 @@
     "puppeteer": "^21.10.0"
   },
   "devDependencies": {
-    "@prisma/client": "^5.9.1",
     "@types/node": "^20.11.0",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.2",
