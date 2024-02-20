@@ -1,0 +1,48 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url = env("DB_URL")
+}
+
+model Guild {
+    id          String      @id @default(cuid())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    jobs        Job[]
+
+    @@map(name: "guilds")
+}
+
+model Job {
+    id          String      @id @default(cuid())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    name        String
+    url         String
+    selector    String
+    interval    Int
+    channelID   String
+    active      Boolean     @default(false)
+    guildID     String
+    Guild       Guild       @relation(fields: [guildID], references: [id], onDelete: Cascade)
+    links       Link[]
+    failuresInRow   Int     @default(0)
+
+    @@unique([name, guildID])
+    @@map(name: "jobs")
+}
+
+model Link {
+    id          String      @id @default(cuid())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    url         String
+    jobID       String
+    Job         Job         @relation(fields: [jobID], references: [id], onDelete: Cascade)
+
+    @@unique([url, jobID])
+    @@map(name: "links")
+}

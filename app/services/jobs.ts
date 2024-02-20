@@ -16,7 +16,7 @@ const testJob = async () => {
     sendMessage("1195917008273952908", message);
 }
 
-const createJob = async (job) => {
+const createJob = async (job: any) => {
     const { name, url, selector, channelID, guildID } = job;
     console.log(`${name} => ${url} => ${selector} => ${channelID} => ${guildID}`);
 }

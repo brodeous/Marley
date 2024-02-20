@@ -2,11 +2,12 @@ import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
 import { commandLog, responseLog } from './logs.js';
+import { saveGuild } from './db.js';
 import { testJob, createJob } from './jobs.js';
 
 let client: Client<boolean>;
 
-const initializeDiscord = async () => {
+const initializeDiscord = async ():Promise<Client> => {
     if (client) return client;
     
     client = new Client({
@@ -29,7 +30,9 @@ const handleEvents = (client: Client<boolean>) => {
         registerCommands(CLIENT_ID as string);
         sendMessage("1195917008273952908", "I am ready");
     });
-    client.on('guildCreate', (guild) => {
+    client.on('guildCreate', async (guild) => {
+        await saveGuild(guild.id);
+        registerCommands(CLIENT_ID as string);
         console.log(`Joined ${guild.name}`);
     });
 }
