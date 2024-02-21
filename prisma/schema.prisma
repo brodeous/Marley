@@ -41,7 +41,7 @@ model Link {
     updatedAt   DateTime    @updatedAt
     url         String
     jobID       String
-    Job         Job         @relation(fields: [jobID], references: [id], onDelete: Cascade)
+    job         Job         @relation(fields: [jobID], references: [id], onDelete: Cascade)
 
     @@unique([url, jobID])
     @@map(name: "links")

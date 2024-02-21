@@ -1,9 +1,7 @@
 import { createServer } from 'http';
 import { PORT } from './config.js';
-import { initializeDiscord, sendMessage } from "./services/discord.js";
-import { prisma } from './services/db.js';
-
-
+import { initializeDiscord } from "./services/discord.js";
+import { getGuilds } from './services/db.js';
 
 const server = createServer((req, res) => {
     res.write('ok');
@@ -12,11 +10,11 @@ const server = createServer((req, res) => {
 
 const runServer = async () => {
     try {
-        const guilds = await prisma.guild.findMany();
+        // const guilds = await getGuilds();
         const client = await initializeDiscord();
-        if (!guilds) {
-            throw new Error("Database not connected!");
-        }
+        // if (!guilds) {
+        //    throw new Error("Database not connected!");
+        //}
         if (!client) {
             throw new Error("Discord Client not instantiated!");
         }

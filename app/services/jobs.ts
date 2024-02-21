@@ -2,6 +2,7 @@ import { scrap } from './scraper.js'
 import { sendMessage } from './discord.js'
 import { outputMessage } from './messenger.js'
 import { cleanQueryParams } from './cleanQueryParams.js'
+import { Guild, Job } from '@prisma/client'
 
 const testJob = async () => {
     const url = 'https://www.facebook.com/marketplace/109455995738828/search/?query=ford%20ranger%204x4';
@@ -21,7 +22,14 @@ const createJob = async (job: any) => {
     console.log(`${name} => ${url} => ${selector} => ${channelID} => ${guildID}`);
 }
 
+const runJob = async (job: Job) => {
+    const { name, url, selector, channelID, guildID } = job;
+    console.log(`${name} => ${url} => ${selector} => ${channelID} => ${guildID}`);
+}
+
+
 export {
     testJob,
-    createJob
+    createJob,
+    runJob
 }
