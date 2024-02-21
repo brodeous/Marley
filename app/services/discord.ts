@@ -3,11 +3,11 @@ import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js'
 import { registerCommands } from '../utility/commands.js';
 import { commandLog, error, info, okay, responseLog } from './logs.js';
 import { saveGuild } from './db.js';
-import { testJob, createJob } from './jobs.js';
+import { testJob, createJob, runJob } from './jobs.js';
 
 let client: Client<boolean>;
 
-const initializeDiscord = async ():Promise<Client> => {
+const initializeDiscord = async ():Promise<Client<boolean>> => {
     if (client) return client;
     
     client = new Client({
@@ -19,22 +19,25 @@ const initializeDiscord = async ():Promise<Client> => {
         ]
     });
     await client.login(DISCORD_KEY as string);
-    handleEvents(client);
-    handleCommands(client);
+    await handleEvents(client);
+    await handleCommands(client);
     return client;
 }
 
-const handleEvents = (client: Client<boolean>) => {
+const handleEvents = async (client: Client<boolean>): Promise<boolean> => {
     client.on('ready', (c: any) => {
-        okay(`${c.user.tag} is ready`);
         registerCommands(CLIENT_ID as string);
-        sendMessage("1195917008273952908", "I am ready");
+        okay(`${c.user.tag} is ready`);
+        //sendMessage("1195917008273952908", "I am ready");
     });
     client.on('guildCreate', async (guild) => {
         await saveGuild(guild.id);
+        okay(`guild saved`);
         registerCommands(CLIENT_ID as string);
-        okay(`joined ${guild.name}`);
+        info(`joined ${guild.name}`);
     });
+
+    return client.isReady();
 }
 
 const sendMessage = async (channelID: string, message: string) => {
@@ -49,7 +52,7 @@ const sendMessage = async (channelID: string, message: string) => {
     }
 }
 
-const handleCommands = (client: Client<boolean>) => {
+const handleCommands = async (client: Client<boolean>) => {
     client.on('interactionCreate', async (interaction) => {
         try {
             if (!interaction.isChatInputCommand()) return;
@@ -70,15 +73,17 @@ const handleCommands = (client: Client<boolean>) => {
             }
 
             if (interaction.commandName === 'create-job') {
-                commandLog(interaction.commandName);
+                info(`${interaction.commandName}`);
 
                 // Grab options
                 const name = interaction.options.getString('name');
                 const url = interaction.options.getString('url');
                 const selector = interaction.options.getString('selector');
+                const interval = interaction.options.getInteger('interval');
+                const active = interaction.options.getBoolean('active') ?? true;
                 const channel = interaction.options.getChannel('channel') || interaction.channel;
                 
-                if (!name || !url || !selector) {
+                if (!name || !url || !selector || !interval) {
                     await interaction.reply('Missing required options');
                     return;
                 }
@@ -92,14 +97,20 @@ const handleCommands = (client: Client<boolean>) => {
                     name,
                     url,
                     selector,
+                    active,
+                    interval,
                     channelID: channel.id,
-                    guildID: interaction.guildId
+                    Guild: {
+                        connect: {
+                            id: interaction.guild?.id,
+                        },
+                    },
                 });
                 
-                console.log(`${interaction.guildId}`);
+                //console.log(`${interaction.guildId}`);
 
-                await interaction.reply('created');
-                responseLog('created');
+                await interaction.reply(`job ${name} created`);
+                okay(`job '${name}' created`);
                 registerCommands(CLIENT_ID as string);
             }
 
@@ -121,6 +132,8 @@ const handleCommands = (client: Client<boolean>) => {
             error(e);
         }
     });
+
+    return client.isReady();
 }
 
 export {

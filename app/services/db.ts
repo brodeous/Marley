@@ -1,7 +1,16 @@
 import { Guild, Job, Prisma, PrismaClient } from '@prisma/client';
-import { info } from './logs.js';
+import { error, info, okay } from './logs.js';
 
 const prisma = new PrismaClient();
+
+const initializeDB = async () => {
+    try {
+        await prisma.guild.findMany();
+        okay(`DATABASE CONNECTED`);
+    } catch (err) {
+        error(err);
+    }
+}
 
 const saveGuild = async (guildID: string): Promise<Guild> => {
     info("creating new guild in database");
@@ -97,6 +106,7 @@ const getLinks = async (guildID: string, channelID: string): Promise<string[]> =
 }
 
 export {
+    initializeDB,
     saveGuild,
     getGuilds,
     saveJob,
