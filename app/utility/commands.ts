@@ -19,8 +19,9 @@ const getCommands = () => [
         .setName('update-link')
         .setDescription('Update Link'),
     new SlashCommandBuilder()
-        .setName('delete-link')
-        .setDescription('Delete Link'),
+        .setName('delete-job')
+        .setDescription('Delete Link')
+        .addStringOption((option) => option.setName('name').setDescription('Name of Job').setRequired(true)),
     new SlashCommandBuilder()
         .setName('test-system')
         .setDescription('Test system'),

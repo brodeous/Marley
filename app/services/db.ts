@@ -62,7 +62,7 @@ const updateJob = async(guildID: string, name: string, job: Prisma.JobUpdateInpu
 }
 
 const deleteJob = async (guildID: string, name: string) => {
-    info(`deleting job\n\t\\___ job name => ${name}`);
+    info(`deleting job\n\t\\___ job name: ${name}`);
     return await prisma.job.delete({
         where: {
             name_guildID: {

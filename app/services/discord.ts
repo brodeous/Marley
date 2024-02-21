@@ -2,7 +2,7 @@ import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
 import { commandLog, error, info, okay, responseLog } from './logs.js';
-import { saveGuild } from './db.js';
+import { deleteJob, saveGuild } from './db.js';
 import { testJob, createJob, runJob } from './jobs.js';
 
 let client: Client<boolean>;
@@ -19,25 +19,23 @@ const initializeDiscord = async ():Promise<Client<boolean>> => {
         ]
     });
     await client.login(DISCORD_KEY as string);
-    await handleEvents(client);
-    await handleCommands(client);
+    handleEvents(client);
+    handleCommands(client);
     return client;
 }
 
-const handleEvents = async (client: Client<boolean>): Promise<boolean> => {
+const handleEvents = async (client: Client<boolean>) => {
     client.on('ready', (c: any) => {
         registerCommands(CLIENT_ID as string);
-        okay(`${c.user.tag} is ready`);
+        okay(`${c.user.tag} IS READY`);
         //sendMessage("1195917008273952908", "I am ready");
     });
     client.on('guildCreate', async (guild) => {
         await saveGuild(guild.id);
-        okay(`guild saved`);
+        okay(`GUILD SAVED`);
         registerCommands(CLIENT_ID as string);
         info(`joined ${guild.name}`);
     });
-
-    return client.isReady();
 }
 
 const sendMessage = async (channelID: string, message: string) => {
@@ -56,6 +54,12 @@ const handleCommands = async (client: Client<boolean>) => {
     client.on('interactionCreate', async (interaction) => {
         try {
             if (!interaction.isChatInputCommand()) return;
+
+            const guildID = interaction.guild?.id;
+            if (!guildID) {
+                await interaction.reply('Guild not found');
+                return;
+            }
 
             if (interaction.commandName === 'ping') {
                 commandLog(interaction.commandName);
@@ -110,7 +114,6 @@ const handleCommands = async (client: Client<boolean>) => {
                 //console.log(`${interaction.guildId}`);
 
                 await interaction.reply(`job ${name} created`);
-                okay(`job '${name}' created`);
                 registerCommands(CLIENT_ID as string);
             }
 
@@ -121,10 +124,20 @@ const handleCommands = async (client: Client<boolean>) => {
                 registerCommands(CLIENT_ID as string);
             }
 
-            if (interaction.commandName === 'delete-link') {
-                commandLog(interaction.commandName);
+            if (interaction.commandName === 'delete-job') {
+                info(`${interaction.commandName}`);
+
+                const name = interaction.options.getString('name');
+
+                if (!name) {
+                    await interaction.reply('Missing required options');
+                    return
+                }
+
+                await deleteJob(guildID, name);
+                
                 await interaction.reply('deleted');
-                responseLog('deleted');
+                okay('DELETED');
                 registerCommands(CLIENT_ID as string);
             }
             
@@ -132,8 +145,6 @@ const handleCommands = async (client: Client<boolean>) => {
             error(e);
         }
     });
-
-    return client.isReady();
 }
 
 export {
