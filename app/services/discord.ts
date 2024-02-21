@@ -1,7 +1,7 @@
 import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
-import { commandLog, responseLog } from './logs.js';
+import { commandLog, error, info, okay, responseLog } from './logs.js';
 import { saveGuild } from './db.js';
 import { testJob, createJob } from './jobs.js';
 
@@ -18,33 +18,34 @@ const initializeDiscord = async ():Promise<Client> => {
             GatewayIntentBits.MessageContent,
         ]
     });
+    await client.login(DISCORD_KEY as string);
     handleEvents(client);
     handleCommands(client);
-    await client.login(DISCORD_KEY as string);
     return client;
 }
 
 const handleEvents = (client: Client<boolean>) => {
     client.on('ready', (c: any) => {
-        console.log(`${c.user.tag} is ready`);
+        okay(`${c.user.tag} is ready`);
         registerCommands(CLIENT_ID as string);
         sendMessage("1195917008273952908", "I am ready");
     });
     client.on('guildCreate', async (guild) => {
         await saveGuild(guild.id);
         registerCommands(CLIENT_ID as string);
-        console.log(`Joined ${guild.name}`);
+        okay(`joined ${guild.name}`);
     });
 }
 
 const sendMessage = async (channelID: string, message: string) => {
-    console.log(`Sending message to ${channelID}`);
+    info(`sending message to ${channelID}`);
     const channel = client.channels.cache.get(channelID) as TextChannel;
 
     const messages = message.split('\n');
 
     for (const message of messages) {
         await channel.send(message);
+        okay(`message sent`);
     }
 }
 
@@ -117,7 +118,7 @@ const handleCommands = (client: Client<boolean>) => {
             }
             
         } catch (e) {
-            console.error(e);
+            error(e);
         }
     });
 }

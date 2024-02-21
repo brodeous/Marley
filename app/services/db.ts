@@ -1,20 +1,25 @@
-import { Guild, Job, Link, Prisma, PrismaClient } from '@prisma/client';
+import { Guild, Job, Prisma, PrismaClient } from '@prisma/client';
+import { info } from './logs.js';
 
 const prisma = new PrismaClient();
 
 const saveGuild = async (guildID: string): Promise<Guild> => {
+    info("creating new guild in database");
     return await prisma.guild.create({ data: { id: guildID } });
 }
 
 const getGuilds = async (): Promise<Guild[]> => {
+    info("retrieving list of guilds from database");
     return await prisma.guild.findMany();
 }
 
 const saveJob = async (job: Prisma.JobCreateInput): Promise<Job> => {
+    info("creating new job in database");
     return await prisma.job.create({ data: job });
 }
 
 const getJobs = async (guildID: string): Promise<Job[]> => {
+    info("retrieving list of jobs from database");
     return await prisma.job.findMany({ 
         where: {
             ...(guildID && { guildID })
@@ -23,6 +28,7 @@ const getJobs = async (guildID: string): Promise<Job[]> => {
 }
 
 const getJob = async (guildID: string, name: string): Promise<Job | null> => {
+    info(`retrieving single job from database\n\t\\___ job name => ${name}`);
     return await prisma.job.findUnique({
         where: {
             name_guildID: {
@@ -34,6 +40,7 @@ const getJob = async (guildID: string, name: string): Promise<Job | null> => {
 }
 
 const updateJob = async(guildID: string, name: string, job: Prisma.JobUpdateInput): Promise<Job> => {
+    info(`updating job\n\t\\___ job name => ${name}`);
     return await prisma.job.update({
         data: job,
         where: {
@@ -46,6 +53,7 @@ const updateJob = async(guildID: string, name: string, job: Prisma.JobUpdateInpu
 }
 
 const deleteJob = async (guildID: string, name: string) => {
+    info(`deleting job\n\t\\___ job name => ${name}`);
     return await prisma.job.delete({
         where: {
             name_guildID: {
@@ -57,6 +65,7 @@ const deleteJob = async (guildID: string, name: string) => {
 }
 
 const saveLinks = async (guildID: string, jobName: string, links: string[]) => {
+    info(`finding job to add links to\n\t\\___ job name => ${jobName}`);
     const job = await prisma.job.findUniqueOrThrow({
         where: {
             name_guildID: {
@@ -65,6 +74,7 @@ const saveLinks = async (guildID: string, jobName: string, links: string[]) => {
             },
         },
     });
+    info(`creating links in database`);
     return await prisma.link.createMany({
         data: links.map((link) => ({
             url: link,
@@ -74,6 +84,7 @@ const saveLinks = async (guildID: string, jobName: string, links: string[]) => {
 }
 
 const getLinks = async (guildID: string, channelID: string): Promise<string[]> => {
+    info(`retrieving links from database`);
     return await prisma.link.findMany({
         where: {
             job: {
