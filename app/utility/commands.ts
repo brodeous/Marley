@@ -47,6 +47,13 @@ const getCommands = (jobs: Job[]) => [
         .addBooleanOption((option) => option.setName('active').setDescription('Is job active'))
         .addChannelOption((option) => option.setName('channel').setDescription('Channel to recieve links')),
     new SlashCommandBuilder()
+        .setName('run-job')
+        .setDescription('Run a specific job')
+        .addStringOption(existingJobOption(jobs)),
+    new SlashCommandBuilder()
+        .setName('list-jobs')
+        .setDescription('List all jobs for current server'),
+    new SlashCommandBuilder()
         .setName('test-system')
         .setDescription('Test system'),
 ];

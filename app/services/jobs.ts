@@ -3,7 +3,7 @@ import { scrap } from './scraper.js'
 import { sendMessage } from './discord.js'
 import { outputMessage } from './messenger.js'
 import { cleanQueryParams } from './cleanQueryParams.js'
-import { info, okay } from './logs.js'
+import { error, info, okay } from './logs.js'
 import { getJob, saveJob } from './db.js'
 
 const testJob = async () => {
@@ -27,11 +27,29 @@ const createJob = async (job: Prisma.JobCreateInput) => {
 }
 
 const runJob = async (job: Job) => {
-    const { name, url, selector, channelID, guildID } = job;
-    info(`job info\n\t\\___ name: ${name}\n\t\\___ url: ${url}\n\t\\___ selector: ${selector}\n\t\\___ channel: ${channelID}\n\t\\___ guild: ${guildID}`);
-    const hello = await getJob(guildID, name);
+    const { name, url, selector, interval, active, channelID, guildID } = job;
+    info(`job info\n\t\\___ name: ${name}\n\t\\___ url: ${url}\n\t\\___ selector: ${selector}\n\t\\___ interval: ${interval}\n\t\\___ active: ${active}\n\t\\___ channel: ${channelID}\n\t\\___ guild: ${guildID}`);
+
+    try {
+        const linksRaw = await scrap(url, selector);
+
+        const links = linksRaw.map(cleanQueryParams);
+
+        const message = outputMessage(links.join('\n'));
+
+        sendMessage(channelID, message);
+    } catch (err) {
+        error(err);
+    }
 }
 
+const runJobs = async (jobs: Job[]) => {
+    for (const job of jobs) {
+        if (!job.active)
+            continue;
+        await runJob(job);
+    }
+}
 
 export {
     testJob,

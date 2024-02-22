@@ -2,7 +2,7 @@ import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
 import { commandLog, error, info, okay, responseLog, warn } from './logs.js';
-import { deleteJob, getJob, saveGuild, updateJob } from './db.js';
+import { deleteJob, getJob, getJobs, saveGuild, updateJob } from './db.js';
 import { testJob, createJob, runJob } from './jobs.js';
 
 let client: Client<boolean>;
@@ -63,7 +63,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 commandLog(interaction.commandName);
                 await interaction.reply('Pong!');
                 responseLog('Pong!');
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'test-system') {
@@ -71,7 +71,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 testJob();
                 await interaction.reply('Running test');
                 responseLog('Running test');
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'create-job') {
@@ -112,14 +112,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 //console.log(`${interaction.guildId}`);
 
                 await interaction.reply(`job ${name} created`);
-                registerCommands(CLIENT_ID as string, guildID);
-            }
-
-            if (interaction.commandName === 'update-link') {
-                commandLog(interaction.commandName);
-                await interaction.reply('updated');
-                responseLog('updated');
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'delete-job') {
@@ -136,7 +129,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 
                 await interaction.reply('deleted');
                 okay('DELETED');
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'disable-job') {
@@ -152,7 +145,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 await updateJob(guildID, name, { active: false });
                 okay(`JOB '${name}' DISABLED`);
                 await interaction.reply(`Job '${name}' disabled`);
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'enable-job') {
@@ -168,7 +161,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 await updateJob(guildID, name, { active: true });
                 okay(`JOB '${name}' ENABLED`);
                 await interaction.reply(`Job '${name}' enabled`);
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'update-job') {
@@ -194,7 +187,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 const jobExists = await getJob(guildID, name);
 
                 if (!jobExists) {
-                    await interaction.reply(`Job with name '${name}' does not exist`);
+                    await interaction.reply(`Job '${name}' does not exist`);
                     warn(`A non-existent job requested from database`);
                 }
 
@@ -209,9 +202,42 @@ const handleCommands = async (client: Client<boolean>) => {
 
                 okay(`JOB '${name}' UPDATED`);
                 await interaction.reply(`Job '${name}' updated`);
-                registerCommands(CLIENT_ID as string, guildID);
+                await registerCommands(CLIENT_ID as string, guildID);
             }
             
+            if (interaction.commandName === 'run-job') {
+                info(`${interaction.commandName}`);
+
+                const name = interaction.options.getString('name');
+
+                if (!name) {
+                    await interaction.reply(`Missing required options`);
+                    return
+                }
+
+                const job = await getJob(guildID, name);
+
+                if (!job) {
+                    await interaction.reply(`Job '${name}' not found`);
+                    warn(`A non-existent job requested from database`);
+                    return
+                }
+
+                await interaction.reply(`Job '${name}' running`);
+                runJob(job);
+                await registerCommands(CLIENT_ID as string, guildID);
+            }
+
+            if (interaction.commandName === 'list-jobs') {
+                info(`${interaction.commandName}`);
+                
+                const jobs = await getJobs(guildID);
+                okay(`JOBS RECIEVED`);
+
+                await interaction.reply(`print list`);
+                await registerCommands(CLIENT_ID as string, guildID);
+            }
+
         } catch (err) {
             error(err);
             if (interaction.isChatInputCommand())
