@@ -1,8 +1,8 @@
 import { CLIENT_ID, DISCORD_KEY } from '../config.js';
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from 'discord.js';
 import { registerCommands } from '../utility/commands.js';
-import { commandLog, error, info, okay, responseLog } from './logs.js';
-import { deleteJob, saveGuild } from './db.js';
+import { commandLog, error, info, okay, responseLog, warn } from './logs.js';
+import { deleteJob, getJob, saveGuild, updateJob } from './db.js';
 import { testJob, createJob, runJob } from './jobs.js';
 
 let client: Client<boolean>;
@@ -26,14 +26,12 @@ const initializeDiscord = async ():Promise<Client<boolean>> => {
 
 const handleEvents = async (client: Client<boolean>) => {
     client.on('ready', (c: any) => {
-        registerCommands(CLIENT_ID as string);
         okay(`${c.user.tag} IS READY`);
-        //sendMessage("1195917008273952908", "I am ready");
     });
     client.on('guildCreate', async (guild) => {
         await saveGuild(guild.id);
         okay(`GUILD SAVED`);
-        registerCommands(CLIENT_ID as string);
+        await registerCommands(CLIENT_ID as string, guild.id);
         info(`joined ${guild.name}`);
     });
 }
@@ -65,7 +63,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 commandLog(interaction.commandName);
                 await interaction.reply('Pong!');
                 responseLog('Pong!');
-                registerCommands(CLIENT_ID as string);
+                registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'test-system') {
@@ -73,7 +71,7 @@ const handleCommands = async (client: Client<boolean>) => {
                 testJob();
                 await interaction.reply('Running test');
                 responseLog('Running test');
-                registerCommands(CLIENT_ID as string);
+                registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'create-job') {
@@ -114,14 +112,14 @@ const handleCommands = async (client: Client<boolean>) => {
                 //console.log(`${interaction.guildId}`);
 
                 await interaction.reply(`job ${name} created`);
-                registerCommands(CLIENT_ID as string);
+                registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'update-link') {
                 commandLog(interaction.commandName);
                 await interaction.reply('updated');
                 responseLog('updated');
-                registerCommands(CLIENT_ID as string);
+                registerCommands(CLIENT_ID as string, guildID);
             }
 
             if (interaction.commandName === 'delete-job') {
@@ -138,11 +136,86 @@ const handleCommands = async (client: Client<boolean>) => {
                 
                 await interaction.reply('deleted');
                 okay('DELETED');
-                registerCommands(CLIENT_ID as string);
+                registerCommands(CLIENT_ID as string, guildID);
+            }
+
+            if (interaction.commandName === 'disable-job') {
+                info(`${interaction.commandName}`);
+
+                const name = interaction.options.getString('name');
+
+                if (!name) {
+                    await interaction.reply('Missing required options');
+                    return
+                }
+                
+                await updateJob(guildID, name, { active: false });
+                okay(`JOB '${name}' DISABLED`);
+                await interaction.reply(`Job '${name}' disabled`);
+                registerCommands(CLIENT_ID as string, guildID);
+            }
+
+            if (interaction.commandName === 'enable-job') {
+                info(`${interaction.commandName}`);
+
+                const name = interaction.options.getString('name');
+
+                if (!name) {
+                    await interaction.reply('Missing required options');
+                    return
+                }
+
+                await updateJob(guildID, name, { active: true });
+                okay(`JOB '${name}' ENABLED`);
+                await interaction.reply(`Job '${name}' enabled`);
+                registerCommands(CLIENT_ID as string, guildID);
+            }
+
+            if (interaction.commandName === 'update-job') {
+                info(`${interaction.commandName}`);
+
+                const name = interaction.options.getString('name');
+                const url = interaction.options.getString('url');
+                const selector = interaction.options.getString('selector');
+                const interval = interaction.options.getInteger('interval');
+                const active = interaction.options.getBoolean('active') ?? true;
+                const channel = interaction.options.getChannel('channel') || interaction.channel;
+
+                if (!name) {
+                    await interaction.reply(`Missing required options`);
+                    return
+                }
+
+                if (channel?.type !== ChannelType.GuildText) {
+                    await interaction.reply(`Channel must be a text channel`);
+                    return
+                }
+
+                const jobExists = await getJob(guildID, name);
+
+                if (!jobExists) {
+                    await interaction.reply(`Job with name '${name}' does not exist`);
+                    warn(`A non-existent job requested from database`);
+                }
+
+                await updateJob(guildID, name, {
+                    ...(name && { name }),
+                    ...(url && { url }),
+                    ...(selector && { selector }),
+                    ...(interval && { interval }),
+                    ...(active && { active }),
+                    ...(channel && { channelID: channel.id }),
+                });
+
+                okay(`JOB '${name}' UPDATED`);
+                await interaction.reply(`Job '${name}' updated`);
+                registerCommands(CLIENT_ID as string, guildID);
             }
             
-        } catch (e) {
-            error(e);
+        } catch (err) {
+            error(err);
+            if (interaction.isChatInputCommand())
+                await interaction.reply(`Error with processing command`);
         }
     });
 }
