@@ -15,7 +15,7 @@ const info = (msg: string) => {
 }
 
 const warn = (msg: string) => {
-    console.warn(`[-] ${msg}`);
+    console.warn(`[W] ${msg}`);
 }
 
 const error = (msg: any) => {
