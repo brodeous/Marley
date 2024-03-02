@@ -44,8 +44,8 @@ const sendMessage = async (channelID: string, message: string) => {
 
     for (const message of messages) {
         await channel.send(message);
-        okay(`message sent`);
     }
+    okay(`message sent`);
 }
 
 const handleCommands = async (client: Client<boolean>) => {

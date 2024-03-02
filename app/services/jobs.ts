@@ -4,14 +4,13 @@ import { sendMessage } from './discord.js'
 import { outputMessage } from './messenger.js'
 import { cleanQueryParams } from './cleanQueryParams.js'
 import { error, info, okay } from './logs.js'
-import { getJob, saveJob } from './db.js'
+import { getJob, getLinks, saveJob, saveLinks, updateJob } from './db.js'
 
 const testJob = async () => {
     const url = 'https://www.facebook.com/marketplace/109455995738828/search/?query=ford%20ranger%204x4';
     const selector = 'a[role="link"]';
 
     const linksRaw = await scrap(url, selector);
-    //console.log(linksRaw);
     const links = linksRaw.map(cleanQueryParams);
 
     const message = outputMessage(links.join('\n'));
@@ -35,11 +34,35 @@ const runJob = async (job: Job) => {
 
         const links = linksRaw.map(cleanQueryParams);
 
-        const message = outputMessage(links.join('\n'));
+        const existingLinks = await getLinks(guildID, channelID);
 
-        sendMessage(channelID, message);
+        const newLinks = [...new Set(links.filter((link) => !existingLinks.includes(link)))];
+
+        if (newLinks) {
+            await saveLinks(guildID, name, newLinks);
+            
+            // Add discord messaging
+            const message = outputMessage(newLinks.join('\n'));
+
+            sendMessage(channelID, message);
+
+            if (job.failuresInRow > 0) {
+                await updateJob(guildID, name, { failuresInRow: 0 });
+            }
+        }
+
     } catch (err) {
         error(err);
+
+        const failuresInRow = job.failuresInRow + 1;
+
+        if (failuresInRow >= 10) {
+            info(`Disabling '${name}' due to too many failures`);
+            await updateJob(guildID, name, { active: false });
+            okay(`JOB '${name}' DISABLED`);
+        }
+
+        await updateJob(guildID, name, { failuresInRow });
     }
 }
 
