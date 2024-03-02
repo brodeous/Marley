@@ -9,4 +9,4 @@ This is not designed for public use. Its more of a way for friends and myself to
 
 ## Current Status
 ---
-- 
+- [ ] Add runtime interval
