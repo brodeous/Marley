@@ -234,7 +234,11 @@ const handleCommands = async (client: Client<boolean>) => {
                 const jobs = await getJobs(guildID);
                 okay(`JOBS RECIEVED`);
 
-                await interaction.reply(`print list`);
+                await interaction.reply(`${jobs.length} job${jobs.length > 1 ? 's' : ''} found: \n
+                                        ${jobs.map(({name, url, selector, interval, active}) =>
+                                                   `**${name}** \n url: ${url} \n selector: ${selector} \n interval: ${interval} \n active: ${active}`)
+                                                   .join(`\n\n`)}`
+                                        );
                 await registerCommands(CLIENT_ID as string, guildID);
             }
 

@@ -3,6 +3,7 @@ import { PORT } from './config.js';
 import { initializeDiscord } from "./services/discord.js";
 import { initializeDB } from './services/db.js';
 import { info, error, okay } from './services/logs.js';
+import { runInterval } from './services/jobs.js';
 
 const server = createServer((req, res) => {
     res.write('ok');
@@ -22,3 +23,4 @@ const runServer = async () => {
 }
 
 runServer();
+runInterval();

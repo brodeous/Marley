@@ -27,7 +27,7 @@ const saveJob = async (job: Prisma.JobCreateInput): Promise<Job> => {
     return await prisma.job.create({ data: job });
 }
 
-const getJobs = async (guildID: string): Promise<Job[]> => {
+const getJobs = async (guildID?: string): Promise<Job[]> => {
     info("retrieving list of jobs from database");
     return await prisma.job.findMany({ 
         where: {
